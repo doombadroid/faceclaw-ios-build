@@ -17,6 +17,9 @@ jobs:
   ipa:
     runs-on: macos-15
     timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: faceclaw
     steps:
       - name: Check out upstream
         uses: actions/checkout@v4
@@ -24,6 +27,7 @@ jobs:
           repository: jimrandomh/faceclaw
           ref: ${{ inputs.ref }}
           submodules: recursive
+          path: faceclaw   # NativeScript names the Xcode project after this folder
 
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
@@ -48,6 +52,8 @@ jobs:
           flag=""; [ "${{ inputs.configuration }}" = "Release" ] && flag="--release"
           scripts/ios.sh prepare ios $flag
 
+      # Pods such as SVGKit still declare iOS 8.0, which Xcode 16 cannot link (libarclite is gone).
+      # A command-line build setting overrides every target; 15.1 is the app's own minimum.
       - name: Build without signing
         run: |
           cd platforms/ios
@@ -58,6 +64,7 @@ jobs:
             -configuration "${{ inputs.configuration }}" -sdk iphoneos \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Faceclaw.xcarchive" \
             archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            IPHONEOS_DEPLOYMENT_TARGET=15.1 \
             | tee "$RUNNER_TEMP/xcodebuild.log" | grep -E '^(\*\*|error:|warning: .*deprecated|▸|ld:|Undefined|clang: error)|error:' || true
           test -d "$RUNNER_TEMP/Faceclaw.xcarchive/Products/Applications"
 
