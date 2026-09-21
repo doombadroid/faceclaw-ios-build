@@ -5,3 +5,13 @@ Builds an **unsigned** iPhone IPA of [Faceclaw](https://github.com/jimrandomh/fa
 Run it: Actions > "Build unsigned Faceclaw iOS IPA" > Run workflow (pick an upstream ref). The IPA is attached to the run as an artifact. Sign and install it with your own Apple ID (AltStore, SideStore or Sideloadly); a free Apple ID signature lasts 7 days.
 
 Faceclaw's iOS port is a developer beta and talks to the glasses only with its custom firmware. Flashing that voids the warranty and can brick the glasses. Not affiliated with Even Realities or with Faceclaw's author.
+
+## Installing and updating from the phone (SideStore)
+
+Every successful run is published under Releases as `Faceclaw-unsigned.ipa`, and `sidestore-source.json` lists the five newest builds. With [SideStore](https://sidestore.io) set up on the iPhone, add this source once:
+
+```
+https://raw.githubusercontent.com/doombadroid/faceclaw-ios-build/main/sidestore-source.json
+```
+
+New builds then show up in SideStore as updates, signed on the phone with your own Apple ID, no cable.
