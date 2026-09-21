@@ -6,6 +6,9 @@ name: Build unsigned Faceclaw iOS IPA
 on:
   workflow_dispatch:
     inputs:
+      repository:
+        description: Repository to build (upstream or a fork)
+        default: jimrandomh/faceclaw
       ref:
         description: Upstream branch, tag or commit
         default: main
@@ -24,7 +27,7 @@ jobs:
       - name: Check out upstream
         uses: actions/checkout@v4
         with:
-          repository: jimrandomh/faceclaw
+          repository: ${{ inputs.repository }}
           ref: ${{ inputs.ref }}
           submodules: recursive
           path: faceclaw   # NativeScript names the Xcode project after this folder
