@@ -1,0 +1,32 @@
+{
+  "name": "Faceclaw iOS builds (doombadroid)",
+  "identifier": "io.github.doombadroid.faceclaw-ios-build",
+  "subtitle": "Unofficial builds of jimrandomh/faceclaw and forks",
+  "apps": [
+    {
+      "name": "Faceclaw",
+      "bundleIdentifier": "com.faceclaw.app",
+      "developerName": "jimrandomh (unofficial build)",
+      "subtitle": "Alternative companion app for Even Realities G2",
+      "localizedDescription": "Developer-beta iOS build of Faceclaw (GPL-3.0). Talks to the glasses only with Faceclaw's custom firmware; flashing that voids the warranty and can brick the glasses.",
+      "iconURL": "https://raw.githubusercontent.com/jimrandomh/faceclaw/main/App_Resources/iOS/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+      "tintColor": "3cf27c",
+      "versions": [
+        {
+          "version": "1.0.6",
+          "buildVersion": "6",
+          "date": "2026-09-21T01:34:31Z",
+          "localizedDescription": "doombadroid/faceclaw@klipkommander (Release)",
+          "downloadURL": "https://github.com/doombadroid/faceclaw-ios-build/releases/download/build-6/Faceclaw-unsigned.ipa",
+          "size": 24687713,
+          "minOSVersion": "15.1"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {}
+      }
+    }
+  ],
+  "news": []
+}
