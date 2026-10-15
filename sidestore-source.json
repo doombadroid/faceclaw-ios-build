@@ -13,6 +13,15 @@
       "tintColor": "3cf27c",
       "versions": [
         {
+          "version": "1.0.10",
+          "buildVersion": "10",
+          "date": "2026-10-15T21:47:48Z",
+          "localizedDescription": "doombadroid/faceclaw@evenhub-webview-popups (Release)",
+          "downloadURL": "https://github.com/doombadroid/faceclaw-ios-build/releases/download/build-10/Faceclaw-unsigned.ipa",
+          "size": 25699386,
+          "minOSVersion": "15.1"
+        },
+        {
           "version": "1.0.9",
           "buildVersion": "9",
           "date": "2026-10-15T21:11:28Z",
