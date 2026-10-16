@@ -1,6 +1,7 @@
-name: Build unsigned Faceclaw iOS IPA
+name: Build unsigned OcuSmart iOS IPA
 
-# Builds jimrandomh/faceclaw (GPL-3.0) for iPhone on a GitHub macOS runner,
+# Builds OcuSmart (doombadroid/faceclaw, a fork of jimrandomh/faceclaw, GPL-3.0)
+# or upstream Faceclaw for iPhone on a GitHub macOS runner,
 # with code signing switched off. The IPA must be signed with your own Apple ID
 # when it is installed (AltStore / SideStore / Sideloadly).
 on:
@@ -87,13 +88,21 @@ jobs:
           # Upstream's version never changes (1.0.0), so SideStore could not tell builds apart.
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.${{ github.run_number }}" -c "Set :CFBundleVersion ${{ github.run_number }}" Payload/*.app/Info.plist
           /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' -c 'Print :CFBundleShortVersionString' -c 'Print :MinimumOSVersion' Payload/*.app/Info.plist
-          zip -qry Faceclaw-unsigned.ipa Payload
-          ls -la Faceclaw-unsigned.ipa
+          # Name the release after the app that was built (OcuSmart for the fork, Faceclaw
+          # for upstream), so a release never claims to be an app it is not.
+          display=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' Payload/*.app/Info.plist 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c 'Print :CFBundleName' Payload/*.app/Info.plist)
+          app=$(printf '%s' "$display" | tr -cd 'A-Za-z0-9')
+          test -n "$app"
+          echo "APP_NAME=$app" >> "$GITHUB_ENV"
+          echo "APP_DISPLAY_NAME=$display" >> "$GITHUB_ENV"
+          zip -qry "$app-unsigned.ipa" Payload
+          ls -la "$app-unsigned.ipa"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Faceclaw-unsigned-ipa
-          path: ${{ runner.temp }}/Faceclaw-unsigned.ipa
+          name: ${{ env.APP_NAME }}-unsigned-ipa
+          path: ${{ runner.temp }}/${{ env.APP_NAME }}-unsigned.ipa
           if-no-files-found: error
 
       - name: Publish as a release (downloadable from the phone, no login)
@@ -102,8 +111,8 @@ jobs:
         run: |
           cd "$RUNNER_TEMP"
           sha=$(git -C "$GITHUB_WORKSPACE/faceclaw" rev-parse --short HEAD)
-          gh release create "build-${{ github.run_number }}" Faceclaw-unsigned.ipa --repo "${{ github.repository }}" \
-            --title "Faceclaw iOS build ${{ github.run_number }} (${{ inputs.repository }}@${{ inputs.ref }} $sha)" \
+          gh release create "build-${{ github.run_number }}" "$APP_NAME-unsigned.ipa" --repo "${{ github.repository }}" \
+            --title "$APP_DISPLAY_NAME iOS build ${{ github.run_number }} (${{ inputs.repository }}@${{ inputs.ref }} $sha)" \
             --notes "Unsigned IPA of ${{ inputs.repository }} at $sha (${{ inputs.configuration }}). Sign it with your own Apple ID: open it in SideStore, or use Impactor / plumesign from a computer. Source: https://github.com/${{ inputs.repository }}/tree/$sha (GPL-3.0)."
 
       - name: Check out this recipe repo for the SideStore feed
@@ -118,20 +127,24 @@ jobs:
           run = "${{ github.run_number }}"
           repo = "${{ github.repository }}"
           path = "sidestore-source.json"
-          size = os.path.getsize(os.path.join(os.environ["RUNNER_TEMP"], "Faceclaw-unsigned.ipa"))
+          DESCRIPTION = ("Developer-beta iOS build of OcuSmart, a fork of jimrandomh/faceclaw (GPL-3.0). "
+                         "Talks to the glasses only with custom firmware (Faceclaw's patch set today); "
+                         "flashing that voids the warranty and can brick the glasses.")
+          app, display = os.environ["APP_NAME"], os.environ["APP_DISPLAY_NAME"]
+          size = os.path.getsize(os.path.join(os.environ["RUNNER_TEMP"], f"{app}-unsigned.ipa"))
           try:
               source = json.load(open(path))
           except FileNotFoundError:
               source = {
-                  "name": "Faceclaw iOS builds (doombadroid)",
+                  "name": "OcuSmart iOS builds (doombadroid)",
                   "identifier": "io.github.doombadroid.faceclaw-ios-build",
-                  "subtitle": "Unofficial builds of jimrandomh/faceclaw and forks",
+                  "subtitle": "OcuSmart, a fork of jimrandomh/faceclaw, and upstream Faceclaw",
                   "apps": [{
-                      "name": "Faceclaw",
+                      "name": display,
                       "bundleIdentifier": "com.faceclaw.app",
-                      "developerName": "jimrandomh (unofficial build)",
+                      "developerName": "doombadroid (fork of jimrandomh/faceclaw)",
                       "subtitle": "Alternative companion app for Even Realities G2",
-                      "localizedDescription": "Developer-beta iOS build of Faceclaw (GPL-3.0). Talks to the glasses only with Faceclaw's custom firmware; flashing that voids the warranty and can brick the glasses.",
+                      "localizedDescription": DESCRIPTION,
                       "iconURL": "https://raw.githubusercontent.com/jimrandomh/faceclaw/main/App_Resources/iOS/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
                       "tintColor": "3cf27c",
                       "versions": [],
@@ -139,13 +152,16 @@ jobs:
                   }],
                   "news": [],
               }
+          # The listed name follows the newest build; the source and bundle identifiers never
+          # change, or SideStore would treat it as a different source or a different app.
+          source["apps"][0]["name"] = display
           versions = source["apps"][0]["versions"]
           versions.insert(0, {
               "version": f"1.0.{run}",
               "buildVersion": run,
               "date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
               "localizedDescription": "${{ inputs.repository }}@${{ inputs.ref }} (${{ inputs.configuration }})",
-              "downloadURL": f"https://github.com/{repo}/releases/download/build-{run}/Faceclaw-unsigned.ipa",
+              "downloadURL": f"https://github.com/{repo}/releases/download/build-{run}/{app}-unsigned.ipa",
               "size": size,
               "minOSVersion": "15.1",
           })

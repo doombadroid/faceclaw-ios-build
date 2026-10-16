@@ -1,14 +1,14 @@
 {
-  "name": "Faceclaw iOS builds (doombadroid)",
+  "name": "OcuSmart iOS builds (doombadroid)",
   "identifier": "io.github.doombadroid.faceclaw-ios-build",
-  "subtitle": "Unofficial builds of jimrandomh/faceclaw and forks",
+  "subtitle": "OcuSmart, a fork of jimrandomh/faceclaw, and upstream Faceclaw",
   "apps": [
     {
-      "name": "Faceclaw",
+      "name": "OcuSmart",
       "bundleIdentifier": "com.faceclaw.app",
-      "developerName": "jimrandomh (unofficial build)",
+      "developerName": "doombadroid (fork of jimrandomh/faceclaw)",
       "subtitle": "Alternative companion app for Even Realities G2",
-      "localizedDescription": "Developer-beta iOS build of Faceclaw (GPL-3.0). Talks to the glasses only with Faceclaw's custom firmware; flashing that voids the warranty and can brick the glasses.",
+      "localizedDescription": "Developer-beta iOS build of OcuSmart, a fork of jimrandomh/faceclaw (GPL-3.0). Talks to the glasses only with custom firmware (Faceclaw's patch set today); flashing that voids the warranty and can brick the glasses.",
       "iconURL": "https://raw.githubusercontent.com/jimrandomh/faceclaw/main/App_Resources/iOS/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
       "tintColor": "3cf27c",
       "versions": [

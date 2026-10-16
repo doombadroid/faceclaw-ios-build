@@ -1,14 +1,14 @@
 # faceclaw-ios-build
 
-Builds an **unsigned** iPhone IPA of [Faceclaw](https://github.com/jimrandomh/faceclaw) (GPL-3.0, by jimrandomh) on a GitHub-hosted macOS runner, for people without a Mac. This repo contains only the build recipe; the source is checked out from upstream at build time and is not modified.
+Builds an **unsigned** iPhone IPA of **OcuSmart** ([doombadroid/faceclaw](https://github.com/doombadroid/faceclaw), a fork of [Faceclaw](https://github.com/jimrandomh/faceclaw), GPL-3.0, by jimrandomh) or of upstream Faceclaw itself, on a GitHub-hosted macOS runner, for people without a Mac. This repo contains only the build recipe; the source is checked out at build time and is not modified.
 
-Run it: Actions > "Build unsigned Faceclaw iOS IPA" > Run workflow (pick an upstream ref). The IPA is attached to the run as an artifact. Sign and install it with your own Apple ID (AltStore, SideStore or Sideloadly); a free Apple ID signature lasts 7 days.
+Run it: Actions > "Build unsigned OcuSmart iOS IPA" > Run workflow (pick a repository and ref). The IPA is attached to the run as an artifact. Sign and install it with your own Apple ID (AltStore, SideStore or Sideloadly); a free Apple ID signature lasts 7 days.
 
-Faceclaw's iOS port is a developer beta and talks to the glasses only with its custom firmware. Flashing that voids the warranty and can brick the glasses. Not affiliated with Even Realities or with Faceclaw's author.
+The iOS app is a developer beta and talks to the glasses only with custom firmware (Faceclaw's patch set today). Flashing that voids the warranty and can brick the glasses. Not affiliated with Even Realities or with Faceclaw's author.
 
 ## Installing and updating from the phone (SideStore)
 
-Every successful run is published under Releases as `Faceclaw-unsigned.ipa`, and `sidestore-source.json` lists the five newest builds. With [SideStore](https://sidestore.io) set up on the iPhone, add this source once:
+Every successful run is published under Releases as `<App>-unsigned.ipa`, named after the app that was built (`OcuSmart-unsigned.ipa` for the fork, `Faceclaw-unsigned.ipa` for upstream; builds up to 22 are all `Faceclaw-unsigned.ipa`), and `sidestore-source.json` lists the five newest builds. With [SideStore](https://sidestore.io) set up on the iPhone, add this source once:
 
 ```
 https://raw.githubusercontent.com/doombadroid/faceclaw-ios-build/main/sidestore-source.json
