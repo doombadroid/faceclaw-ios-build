@@ -111,6 +111,15 @@ jobs:
           echo "BUILD_TOOLCHAIN=$xcode, iOS SDK $sdk" >> "$GITHUB_ENV"
           zip -qry "$app-unsigned.ipa" Payload
           ls -la "$app-unsigned.ipa"
+          # Crash reports from the phone are unsymbolicated: keep the archive's dSYMs
+          # (the app binary, which links the Kotlin library in, plus its frameworks).
+          if ls Faceclaw.xcarchive/dSYMs/*.dSYM >/dev/null 2>&1; then
+            (cd Faceclaw.xcarchive && zip -qry "$RUNNER_TEMP/$app-dSYMs.zip" dSYMs)
+            ls -la "$app-dSYMs.zip"
+            for d in Faceclaw.xcarchive/dSYMs/*.dSYM; do xcrun dwarfdump --uuid "$d"; done
+          else
+            echo "No dSYMs in the archive"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
@@ -124,7 +133,9 @@ jobs:
         run: |
           cd "$RUNNER_TEMP"
           sha=$(git -C "$GITHUB_WORKSPACE/faceclaw" rev-parse --short HEAD)
-          gh release create "build-${{ github.run_number }}" "$APP_NAME-unsigned.ipa" --repo "${{ github.repository }}" \
+          assets=("$APP_NAME-unsigned.ipa")
+          [ -f "$APP_NAME-dSYMs.zip" ] && assets+=("$APP_NAME-dSYMs.zip")
+          gh release create "build-${{ github.run_number }}" "${assets[@]}" --repo "${{ github.repository }}" \
             --title "$APP_DISPLAY_NAME iOS build ${{ github.run_number }} (${{ inputs.repository }}@${{ inputs.ref }} $sha)" \
             --notes "Unsigned IPA of ${{ inputs.repository }} at $sha (${{ inputs.configuration }}; $BUILD_TOOLCHAIN on ${{ inputs.runner }}). Sign it with your own Apple ID: open it in SideStore, or use Impactor / plumesign from a computer. Source: https://github.com/${{ inputs.repository }}/tree/$sha (GPL-3.0)."
 
