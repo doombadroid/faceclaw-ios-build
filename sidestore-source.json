@@ -13,6 +13,15 @@
       "tintColor": "3cf27c",
       "versions": [
         {
+          "version": "1.0.19",
+          "buildVersion": "19",
+          "date": "2026-10-16T00:25:00Z",
+          "localizedDescription": "doombadroid/faceclaw@evenhub-webview-popups (Release)",
+          "downloadURL": "https://github.com/doombadroid/faceclaw-ios-build/releases/download/build-19/Faceclaw-unsigned.ipa",
+          "size": 25705017,
+          "minOSVersion": "15.1"
+        },
+        {
           "version": "1.0.16",
           "buildVersion": "16",
           "date": "2026-10-15T23:27:48Z",
@@ -46,15 +55,6 @@
           "localizedDescription": "doombadroid/faceclaw@evenhub-webview-popups (Release)",
           "downloadURL": "https://github.com/doombadroid/faceclaw-ios-build/releases/download/build-13/Faceclaw-unsigned.ipa",
           "size": 25700352,
-          "minOSVersion": "15.1"
-        },
-        {
-          "version": "1.0.12",
-          "buildVersion": "12",
-          "date": "2026-10-15T22:25:41Z",
-          "localizedDescription": "doombadroid/faceclaw@evenhub-webview-popups (Release)",
-          "downloadURL": "https://github.com/doombadroid/faceclaw-ios-build/releases/download/build-12/Faceclaw-unsigned.ipa",
-          "size": 25700118,
           "minOSVersion": "15.1"
         }
       ],
