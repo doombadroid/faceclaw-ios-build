@@ -158,7 +158,7 @@ jobs:
                       "developerName": "doombadroid (fork of jimrandomh/faceclaw)",
                       "subtitle": "Alternative companion app for Even Realities G2",
                       "localizedDescription": DESCRIPTION,
-                      "iconURL": "https://raw.githubusercontent.com/jimrandomh/faceclaw/main/App_Resources/iOS/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+                      "iconURL": "https://raw.githubusercontent.com/doombadroid/faceclaw/ocusmart-ui/App_Resources/iOS/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
                       "tintColor": "3cf27c",
                       "versions": [],
                       "appPermissions": {"entitlements": [], "privacy": {}},

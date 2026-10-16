@@ -9,7 +9,7 @@
       "developerName": "doombadroid (fork of jimrandomh/faceclaw)",
       "subtitle": "Alternative companion app for Even Realities G2",
       "localizedDescription": "Developer-beta iOS build of OcuSmart, a fork of jimrandomh/faceclaw (GPL-3.0). Talks to the glasses only with custom firmware (Faceclaw's patch set today); flashing that voids the warranty and can brick the glasses.",
-      "iconURL": "https://raw.githubusercontent.com/jimrandomh/faceclaw/main/App_Resources/iOS/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+      "iconURL": "https://raw.githubusercontent.com/doombadroid/faceclaw/ocusmart-ui/App_Resources/iOS/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
       "tintColor": "3cf27c",
       "versions": [
         {
