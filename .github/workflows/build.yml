@@ -8,11 +8,17 @@ on:
   workflow_dispatch:
     inputs:
       repository:
-        description: Repository to build (upstream or a fork)
-        default: jimrandomh/faceclaw
+        description: Repository to build (OcuSmart fork or upstream jimrandomh/faceclaw)
+        default: doombadroid/faceclaw
       ref:
-        description: Upstream branch, tag or commit
-        default: main
+        description: Branch, tag or commit
+        default: ocusmart-ui
+      runner:
+        description: Runner image (macos-15 has Xcode up to 26.x; xcode-27 has Xcode 27.x for the iOS 27 SDK)
+        default: macos-15
+      xcode:
+        description: Xcode version for setup-xcode (e.g. latest-stable, 26.3, 27.1)
+        default: latest-stable
       configuration:
         description: Debug or Release
         default: Release
@@ -22,7 +28,7 @@ permissions:
 
 jobs:
   ipa:
-    runs-on: macos-15
+    runs-on: ${{ inputs.runner }}
     timeout-minutes: 90
     defaults:
       run:
@@ -39,7 +45,7 @@ jobs:
       # Upstream uses iOS 26 SDK names (e.g. AVAudioSessionCategoryOptionAllowBluetoothHFP);
       # the runner's default Xcode is older.
       - uses: maxim-lobanov/setup-xcode@v1
-        with: { xcode-version: latest-stable }
+        with: { xcode-version: '${{ inputs.xcode }}' }
 
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
@@ -96,6 +102,13 @@ jobs:
           test -n "$app"
           echo "APP_NAME=$app" >> "$GITHUB_ENV"
           echo "APP_DISPLAY_NAME=$display" >> "$GITHUB_ENV"
+          # Record which toolchain built it: the iOS 27 SDK changes launch rules (UIScene)
+          # and iPhone Duo layout, so a build's SDK must be readable from its release.
+          exe=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' Payload/*.app/Info.plist)
+          sdk=$(xcrun vtool -show-build Payload/*.app/"$exe" | awk '/sdk/ {print $2; exit}')
+          xcode=$(xcodebuild -version | tr '\n' ' ' | sed 's/ *$//')
+          echo "Built with $xcode, iOS SDK $sdk"
+          echo "BUILD_TOOLCHAIN=$xcode, iOS SDK $sdk" >> "$GITHUB_ENV"
           zip -qry "$app-unsigned.ipa" Payload
           ls -la "$app-unsigned.ipa"
 
@@ -113,7 +126,7 @@ jobs:
           sha=$(git -C "$GITHUB_WORKSPACE/faceclaw" rev-parse --short HEAD)
           gh release create "build-${{ github.run_number }}" "$APP_NAME-unsigned.ipa" --repo "${{ github.repository }}" \
             --title "$APP_DISPLAY_NAME iOS build ${{ github.run_number }} (${{ inputs.repository }}@${{ inputs.ref }} $sha)" \
-            --notes "Unsigned IPA of ${{ inputs.repository }} at $sha (${{ inputs.configuration }}). Sign it with your own Apple ID: open it in SideStore, or use Impactor / plumesign from a computer. Source: https://github.com/${{ inputs.repository }}/tree/$sha (GPL-3.0)."
+            --notes "Unsigned IPA of ${{ inputs.repository }} at $sha (${{ inputs.configuration }}; $BUILD_TOOLCHAIN on ${{ inputs.runner }}). Sign it with your own Apple ID: open it in SideStore, or use Impactor / plumesign from a computer. Source: https://github.com/${{ inputs.repository }}/tree/$sha (GPL-3.0)."
 
       - name: Check out this recipe repo for the SideStore feed
         uses: actions/checkout@v4
