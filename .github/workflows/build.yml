@@ -22,6 +22,10 @@ on:
       configuration:
         description: Debug or Release
         default: Release
+      publish:
+        description: Publish a release and update the SideStore feed (off for trial builds)
+        type: boolean
+        default: true
 
 permissions:
   contents: write   # publish the IPA as a release and update the SideStore feed
@@ -69,6 +73,15 @@ jobs:
         run: |
           flag=""; [ "${{ inputs.configuration }}" = "Release" ] && flag="--release"
           scripts/ios.sh prepare ios $flag
+
+      # Reports only: a red test here does not block the IPA.
+      - name: Native and Kotlin/iOS tests
+        continue-on-error: true
+        run: |
+          rc=0
+          npm run test:kotlin:ios || rc=1
+          for f in tests/ios-*-native.cjs; do echo "== $f"; node "$f" || rc=1; done
+          exit $rc
 
       # Pods such as SVGKit still declare iOS 8.0, which Xcode 16 cannot link (libarclite is gone).
       # A command-line build setting overrides every target; 15.1 is the app's own minimum.
@@ -128,6 +141,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish as a release (downloadable from the phone, no login)
+        if: inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -140,10 +154,12 @@ jobs:
             --notes "Unsigned IPA of ${{ inputs.repository }} at $sha (${{ inputs.configuration }}; $BUILD_TOOLCHAIN on ${{ inputs.runner }}). Sign it with your own Apple ID: open it in SideStore, or use Impactor / plumesign from a computer. Source: https://github.com/${{ inputs.repository }}/tree/$sha (GPL-3.0)."
 
       - name: Check out this recipe repo for the SideStore feed
+        if: inputs.publish
         uses: actions/checkout@v4
         with: { path: recipe }
 
       - name: Update the SideStore source feed
+        if: inputs.publish
         working-directory: recipe
         run: |
           python3 - <<'PY'
