@@ -66,7 +66,8 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          npm install -g nativescript
+          # Pinned: SPMPackages handling (FluidAudio) was checked against this CLI's source.
+          npm install -g nativescript@9.1.2
           ns --version
 
       # The before-prepare hook (scripts/ios-native-deps.cjs) fetches the sha256-pinned
@@ -82,6 +83,23 @@ jobs:
           flag=""; [ "${{ inputs.configuration }}" = "Release" ] && flag="--release"
           scripts/ios.sh prepare ios $flag
 
+      # The CLI only warns when it cannot add a Swift package, and the build then fails
+      # much later with "no such module". Fail here when the app declares FluidAudio.
+      - name: Check the Swift packages are in the Xcode project
+        run: |
+          if grep -q "FluidAudio" nativescript.config.ts; then
+            grep -q "FluidAudio" platforms/ios/faceclaw.xcodeproj/project.pbxproj \
+              || { echo "::error::ns prepare did not add FluidAudio (SPMPackages) to platforms/ios/faceclaw.xcodeproj"; exit 1; }
+          fi
+
+      # Swift package checkouts for xcodebuild (FluidAudio and its 49 MB NeMo xcframework).
+      - name: Cache Swift package checkouts
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/spm
+          key: spm-${{ runner.os }}-${{ hashFiles('faceclaw/nativescript.config.ts') }}
+          restore-keys: spm-${{ runner.os }}-
+
       # Reports only: a red test here does not block the IPA.
       - name: Native and Kotlin/iOS tests
         continue-on-error: true
@@ -92,7 +110,8 @@ jobs:
           exit $rc
 
       # Pods such as SVGKit still declare iOS 8.0, which Xcode 16 cannot link (libarclite is gone).
-      # A command-line build setting overrides every target; 15.1 is the app's own minimum.
+      # A command-line build setting overrides every target; 17.0 is the app's own minimum
+      # (FluidAudio needs iOS 17; App_Resources/iOS/build.xcconfig and Podfile say the same).
       - name: Build without signing
         run: |
           cd platforms/ios
@@ -102,8 +121,9 @@ jobs:
           xcodebuild -workspace "$workspace" -scheme "$scheme" \
             -configuration "${{ inputs.configuration }}" -sdk iphoneos \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Faceclaw.xcarchive" \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/spm" \
             archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            IPHONEOS_DEPLOYMENT_TARGET=15.1 \
+            IPHONEOS_DEPLOYMENT_TARGET=17.0 \
             | tee "$RUNNER_TEMP/xcodebuild.log" | grep -E '^(\*\*|error:|warning: .*deprecated|▸|ld:|Undefined|clang: error)|error:' || true
           test -d "$RUNNER_TEMP/Faceclaw.xcarchive/Products/Applications"
 
@@ -150,7 +170,7 @@ jobs:
           cd "$RUNNER_TEMP"
           exe=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' Payload/*.app/Info.plist)
           ls -la Payload/*.app/"$exe"
-          strings -a Payload/*.app/"$exe" | grep -E '^(FaceclawSherpa|FaceclawKitIos(SherpaLoader|PcmRecognizer|VoicePrinter|OnDeviceTranscriber|TranscriptListener|SpeakerVerifi))' | sort -u
+          strings -a Payload/*.app/"$exe" | grep -E '^(FaceclawSherpa|FaceclawParakeet|FaceclawKitIos(SherpaLoader|PcmRecognizer|VoicePrinter|OnDeviceTranscriber|TranscriptListener|SpeakerVerifi))' | sort -u
           # The app binary is stripped; its dSYM still names the linked C API.
           for dwarf in Faceclaw.xcarchive/dSYMs/*.app.dSYM/Contents/Resources/DWARF/*; do
             echo "sherpa-onnx C API symbols in $(basename "$dwarf"): $(nm "$dwarf" 2>/dev/null | grep -c ' T _SherpaOnnx' || true)"
@@ -225,7 +245,7 @@ jobs:
               "localizedDescription": "${{ inputs.repository }}@${{ inputs.ref }} (${{ inputs.configuration }})",
               "downloadURL": f"https://github.com/{repo}/releases/download/build-{run}/{app}-unsigned.ipa",
               "size": size,
-              "minOSVersion": "15.1",
+              "minOSVersion": "17.0",
           })
           del versions[5:]
           json.dump(source, open(path, "w"), indent=2)
