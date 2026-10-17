@@ -92,7 +92,7 @@ jobs:
           h=$(find native/kotlin -path '*ios-arm64*' -name FaceclawKit.h | head -1)
           [ -n "$h" ] || { echo "::error::FaceclawKit.h not found under native/kotlin"; exit 1; }
           mkdir -p "$RUNNER_TEMP/header" && cp "$h" "$RUNNER_TEMP/header/FaceclawKit.h"
-          awk '/^@(protocol|interface) /{c=$2} /_:|_;/ && /^[-+]/{print "mangled: "c": "$0}' "$h"
+          sed 's/ __attribute__.*//' "$h" | awk '/^@(protocol|interface) /{c=$2} /_:|_;/ && /^[-+]/{print "mangled: "c": "$0}'
           if [ -f native/kotlin/FaceclawKit.h.snapshot ] && ! diff -q native/kotlin/FaceclawKit.h.snapshot "$h" >/dev/null; then
             echo "::warning::native/kotlin/FaceclawKit.h.snapshot is stale; refresh it from this run's FaceclawKit-header artifact"
           fi
