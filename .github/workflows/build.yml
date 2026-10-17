@@ -83,14 +83,28 @@ jobs:
           flag=""; [ "${{ inputs.configuration }}" = "Release" ] && flag="--release"
           scripts/ios.sh prepare ios $flag
 
-      # Kotlin/Native appends "_" to one of two interface methods sharing a selector, and the JS
-      # side must use that exact name (build 37 crashed on onAudioPacketData:arm:arrivalMs_:).
-      # The header is not in the IPA, so list every mangled selector with its protocol here.
-      - name: List Kotlin/Native "_"-mangled selectors
+      # The JS side reaches Kotlin and the ObjC/Swift shims by name with no compiler in between
+      # (build 37 crashed on onAudioPacketData:arm:arrivalMs_:, which Kotlin/Native mangled).
+      # Check every name against the freshly generated FaceclawKit.h, and keep the header so the
+      # repo's snapshot (native/kotlin/FaceclawKit.h.snapshot, used by npm test) can be refreshed.
+      - name: Check JS names against the native headers
         run: |
           h=$(find native/kotlin -path '*ios-arm64*' -name FaceclawKit.h | head -1)
-          [ -n "$h" ] || { echo "::warning::FaceclawKit.h not found"; exit 0; }
-          awk '/^@(protocol|interface) /{c=$2} /_:|_;/ && /^[-+]/{print c": "$0}' "$h"
+          [ -n "$h" ] || { echo "::error::FaceclawKit.h not found under native/kotlin"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/header" && cp "$h" "$RUNNER_TEMP/header/FaceclawKit.h"
+          awk '/^@(protocol|interface) /{c=$2} /_:|_;/ && /^[-+]/{print "mangled: "c": "$0}' "$h"
+          if [ -f native/kotlin/FaceclawKit.h.snapshot ] && ! diff -q native/kotlin/FaceclawKit.h.snapshot "$h" >/dev/null; then
+            echo "::warning::native/kotlin/FaceclawKit.h.snapshot is stale; refresh it from this run's FaceclawKit-header artifact"
+          fi
+          if [ -f scripts/check-native-names.cjs ]; then node scripts/check-native-names.cjs --kotlin-header "$h"; fi
+
+      - name: Upload FaceclawKit.h
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FaceclawKit-header
+          path: ${{ runner.temp }}/header/FaceclawKit.h
+          if-no-files-found: ignore
 
       # The CLI only warns when it cannot add a Swift package, and the build then fails
       # much later with "no such module". Fail here when the app declares FluidAudio.
