@@ -69,6 +69,14 @@ jobs:
           npm install -g nativescript
           ns --version
 
+      # The before-prepare hook (scripts/ios-native-deps.cjs) fetches the sha256-pinned
+      # sherpa-onnx iOS release (74 MB); keep that archive between runs.
+      - name: Cache native dependency downloads
+        uses: actions/cache@v4
+        with:
+          path: faceclaw/native/kotlin/build/ios-deps
+          key: ios-native-deps-${{ hashFiles('faceclaw/scripts/ios-native-deps.cjs') }}
+
       - name: Prepare the Xcode project (webpack bundle, Kotlin framework, pods)
         run: |
           flag=""; [ "${{ inputs.configuration }}" = "Release" ] && flag="--release"
@@ -133,6 +141,20 @@ jobs:
           else
             echo "No dSYMs in the archive"
           fi
+
+      # Reports only: which shims and sherpa-onnx entry points made it into the app binary,
+      # and the binary's size (the static ORT + sherpa link is most of any growth).
+      - name: Native symbol report
+        continue-on-error: true
+        run: |
+          cd "$RUNNER_TEMP"
+          exe=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' Payload/*.app/Info.plist)
+          ls -la Payload/*.app/"$exe"
+          strings -a Payload/*.app/"$exe" | grep -E '^(FaceclawSherpa|FaceclawKitIos(SherpaLoader|PcmRecognizer|VoicePrinter|OnDeviceTranscriber|TranscriptListener|SpeakerVerifi))' | sort -u
+          # The app binary is stripped; its dSYM still names the linked C API.
+          for dwarf in Faceclaw.xcarchive/dSYMs/*.app.dSYM/Contents/Resources/DWARF/*; do
+            echo "sherpa-onnx C API symbols in $(basename "$dwarf"): $(nm "$dwarf" 2>/dev/null | grep -c ' T _SherpaOnnx' || true)"
+          done
 
       - uses: actions/upload-artifact@v4
         with:
