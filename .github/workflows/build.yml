@@ -83,6 +83,15 @@ jobs:
           flag=""; [ "${{ inputs.configuration }}" = "Release" ] && flag="--release"
           scripts/ios.sh prepare ios $flag
 
+      # Kotlin/Native appends "_" to one of two interface methods sharing a selector, and the JS
+      # side must use that exact name (build 37 crashed on onAudioPacketData:arm:arrivalMs_:).
+      # The header is not in the IPA, so list every mangled selector with its protocol here.
+      - name: List Kotlin/Native "_"-mangled selectors
+        run: |
+          h=$(find native/kotlin -path '*ios-arm64*' -name FaceclawKit.h | head -1)
+          [ -n "$h" ] || { echo "::warning::FaceclawKit.h not found"; exit 0; }
+          awk '/^@(protocol|interface) /{c=$2} /_:|_;/ && /^[-+]/{print c": "$0}' "$h"
+
       # The CLI only warns when it cannot add a Swift package, and the build then fails
       # much later with "no such module". Fail here when the app declares FluidAudio.
       - name: Check the Swift packages are in the Xcode project
