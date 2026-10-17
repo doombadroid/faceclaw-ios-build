@@ -94,7 +94,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/header" && cp "$h" "$RUNNER_TEMP/header/FaceclawKit.h"
           sed 's/ __attribute__.*//' "$h" | awk '/^@(protocol|interface) /{c=$2} /_:|_;/ && /^[-+]/{print "mangled: "c": "$0}'
           if [ -f native/kotlin/FaceclawKit.h.snapshot ] && ! diff -q native/kotlin/FaceclawKit.h.snapshot "$h" >/dev/null; then
-            echo "::warning::native/kotlin/FaceclawKit.h.snapshot is stale; refresh it from this run's FaceclawKit-header artifact"
+            echo "::error::native/kotlin/FaceclawKit.h.snapshot differs from the generated header: run npm run kotlin-header and commit it"; diff native/kotlin/FaceclawKit.h.snapshot "$h" | head -40; exit 1
           fi
           if [ -f scripts/check-native-names.cjs ]; then node scripts/check-native-names.cjs --kotlin-header "$h"; fi
 
