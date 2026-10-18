@@ -14,11 +14,11 @@ on:
         description: Branch, tag or commit
         default: ocusmart-ui
       runner:
-        description: Runner image (macos-15 has Xcode up to 26.x; xcode-27 has Xcode 27.x for the iOS 27 SDK)
-        default: macos-15
+        description: Runner image (macos-26 has Xcode 26.0.1-26.6, iOS SDKs 26.0-26.5; macos-15 stops at Xcode 26.3, iOS SDK 26.2)
+        default: macos-26
       xcode:
-        description: Xcode version for setup-xcode (e.g. latest-stable, 26.3, 27.1)
-        default: latest-stable
+        description: Xcode version for setup-xcode (26.6 = iOS 26.5 SDK, 26.4.1 = iOS 26.4 SDK; the app needs an iOS 26.4+ SDK)
+        default: '26.6'
       configuration:
         description: Debug or Release
         default: Release
@@ -133,8 +133,8 @@ jobs:
           exit $rc
 
       # Pods such as SVGKit still declare iOS 8.0, which Xcode 16 cannot link (libarclite is gone).
-      # A command-line build setting overrides every target; 17.0 is the app's own minimum
-      # (FluidAudio needs iOS 17; App_Resources/iOS/build.xcconfig and Podfile say the same).
+      # A command-line build setting overrides every target; 26.4 is the app's own minimum
+      # (Translation strategies; App_Resources/iOS/build.xcconfig and Podfile say the same).
       - name: Build without signing
         run: |
           cd platforms/ios
@@ -146,7 +146,7 @@ jobs:
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Faceclaw.xcarchive" \
             -clonedSourcePackagesDirPath "$RUNNER_TEMP/spm" \
             archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            IPHONEOS_DEPLOYMENT_TARGET=17.0 \
+            IPHONEOS_DEPLOYMENT_TARGET=26.4 \
             | tee "$RUNNER_TEMP/xcodebuild.log" | grep -E '^(\*\*|error:|warning: .*deprecated|▸|ld:|Undefined|clang: error)|error:' || true
           test -d "$RUNNER_TEMP/Faceclaw.xcarchive/Products/Applications"
 
@@ -268,7 +268,7 @@ jobs:
               "localizedDescription": "${{ inputs.repository }}@${{ inputs.ref }} (${{ inputs.configuration }})",
               "downloadURL": f"https://github.com/{repo}/releases/download/build-{run}/{app}-unsigned.ipa",
               "size": size,
-              "minOSVersion": "17.0",
+              "minOSVersion": "26.4",
           })
           del versions[5:]
           json.dump(source, open(path, "w"), indent=2)
