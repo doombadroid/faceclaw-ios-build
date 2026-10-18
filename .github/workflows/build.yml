@@ -46,6 +46,15 @@ jobs:
           submodules: recursive
           path: faceclaw   # NativeScript names the Xcode project after this folder
 
+      # The deployment target is the checked-out app's own, so a branch still on an older minimum
+      # (ocusmart-ui: 17.0) builds and is listed as it declares; 17.0 when the xcconfig has none.
+      - name: Read the app's minimum iOS
+        run: |
+          min=$(sed -n 's/^IPHONEOS_DEPLOYMENT_TARGET *= *\([0-9.]*\);* *$/\1/p' App_Resources/iOS/build.xcconfig 2>/dev/null | head -1)
+          [ -n "$min" ] || { min=17.0; echo "::warning::no IPHONEOS_DEPLOYMENT_TARGET in App_Resources/iOS/build.xcconfig; using $min"; }
+          echo "MIN_IOS=$min" >> "$GITHUB_ENV"
+          echo "minimum iOS $min"
+
       # Upstream uses iOS 26 SDK names (e.g. AVAudioSessionCategoryOptionAllowBluetoothHFP);
       # the runner's default Xcode is older.
       - uses: maxim-lobanov/setup-xcode@v1
@@ -133,8 +142,8 @@ jobs:
           exit $rc
 
       # Pods such as SVGKit still declare iOS 8.0, which Xcode 16 cannot link (libarclite is gone).
-      # A command-line build setting overrides every target; 26.4 is the app's own minimum
-      # (Translation strategies; App_Resources/iOS/build.xcconfig and Podfile say the same).
+      # A command-line build setting overrides every target with the app's own minimum (MIN_IOS,
+      # from App_Resources/iOS/build.xcconfig; 26.4 on the translation work for its Strategy APIs).
       - name: Build without signing
         run: |
           cd platforms/ios
@@ -146,7 +155,7 @@ jobs:
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Faceclaw.xcarchive" \
             -clonedSourcePackagesDirPath "$RUNNER_TEMP/spm" \
             archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            IPHONEOS_DEPLOYMENT_TARGET=26.4 \
+            IPHONEOS_DEPLOYMENT_TARGET="$MIN_IOS" \
             | tee "$RUNNER_TEMP/xcodebuild.log" | grep -E '^(\*\*|error:|warning: .*deprecated|▸|ld:|Undefined|clang: error)|error:' || true
           test -d "$RUNNER_TEMP/Faceclaw.xcarchive/Products/Applications"
 
@@ -268,7 +277,7 @@ jobs:
               "localizedDescription": "${{ inputs.repository }}@${{ inputs.ref }} (${{ inputs.configuration }})",
               "downloadURL": f"https://github.com/{repo}/releases/download/build-{run}/{app}-unsigned.ipa",
               "size": size,
-              "minOSVersion": "26.4",
+              "minOSVersion": os.environ["MIN_IOS"],
           })
           del versions[5:]
           json.dump(source, open(path, "w"), indent=2)
