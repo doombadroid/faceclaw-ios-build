@@ -13,6 +13,15 @@
       "tintColor": "3cf27c",
       "versions": [
         {
+          "version": "1.0.55",
+          "buildVersion": "55",
+          "date": "2026-10-19T02:44:27Z",
+          "localizedDescription": "doombadroid/faceclaw@spike/translate (Release)",
+          "downloadURL": "https://github.com/doombadroid/faceclaw-ios-build/releases/download/build-55/OcuSmart-unsigned.ipa",
+          "size": 39328459,
+          "minOSVersion": "26.4"
+        },
+        {
           "version": "1.0.54",
           "buildVersion": "54",
           "date": "2026-10-19T02:08:57Z",
@@ -46,15 +55,6 @@
           "localizedDescription": "doombadroid/faceclaw@spike/translate (Release)",
           "downloadURL": "https://github.com/doombadroid/faceclaw-ios-build/releases/download/build-51/OcuSmart-unsigned.ipa",
           "size": 39256563,
-          "minOSVersion": "26.4"
-        },
-        {
-          "version": "1.0.50",
-          "buildVersion": "50",
-          "date": "2026-10-18T16:36:14Z",
-          "localizedDescription": "doombadroid/faceclaw@spike/translate (Release)",
-          "downloadURL": "https://github.com/doombadroid/faceclaw-ios-build/releases/download/build-50/OcuSmart-unsigned.ipa",
-          "size": 39253369,
           "minOSVersion": "26.4"
         }
       ],
